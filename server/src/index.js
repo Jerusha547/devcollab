@@ -4,6 +4,8 @@ const session = require("express-session");
 const passport = require("passport");
 const GitHubStrategy = require("passport-github2").Strategy;
 const githubRoutes = require("./routes/github");
+const prRoutes = require("./routes/prs");
+
 require("dotenv").config();
 
 const app = express();
@@ -21,6 +23,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use("/github", githubRoutes);
+app.use("/prs", prRoutes);
 
 passport.use(
   new GitHubStrategy(
