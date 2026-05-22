@@ -11,7 +11,7 @@ const isAuthenticated = (req, res, next) => {
 // Submit a PR for review
 router.post("/submit", isAuthenticated, async (req, res) => {
   try {
-    const { github_pr_url, reviewer_id, team_id } = req.body;
+    const { github_pr_url, reviewer_id } = req.body;
 
     // Extract owner and repo from PR url
     // URL format: https://github.com/owner/repo/pull/number
@@ -36,10 +36,10 @@ router.post("/submit", isAuthenticated, async (req, res) => {
     // Save to database
     const result = await pool.query(
       `INSERT INTO pull_requests 
-        (github_pr_url, title, submitter_id, reviewer_id, team_id, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending')
-       RETURNING *`,
-      [github_pr_url, title, req.user.github_id, reviewer_id, team_id],
+    (github_pr_url, title, submitter_id, reviewer_id, status)
+   VALUES ($1, $2, $3, $4, 'pending')
+   RETURNING *`,
+      [github_pr_url, title, req.user.username, reviewer_id],
     );
 
     res.json(result.rows[0]);
@@ -56,7 +56,7 @@ router.get("/submitted", isAuthenticated, async (req, res) => {
       `SELECT * FROM pull_requests 
        WHERE submitter_id = $1 
        ORDER BY created_at DESC`,
-      [req.user.github_id],
+      [req.user.username],
     );
     res.json(result.rows);
   } catch (error) {
@@ -71,7 +71,7 @@ router.get("/assigned", isAuthenticated, async (req, res) => {
       `SELECT * FROM pull_requests 
        WHERE reviewer_id = $1 
        ORDER BY created_at DESC`,
-      [req.user.github_id],
+      [req.user.username],
     );
     res.json(result.rows);
   } catch (error) {
