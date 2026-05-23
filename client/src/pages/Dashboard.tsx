@@ -26,6 +26,7 @@ function Dashboard({ user }: { user: any }) {
   const [message, setMessage] = useState("");
   const [notification, setNotification] = useState("");
   const [showMetrics, setShowMetrics] = useState(false);
+  const [search, setSearch] = useState("");
 
   useWebSocket(user.username, (data) => {
     setNotification(data.message);
@@ -165,6 +166,12 @@ function Dashboard({ user }: { user: any }) {
           Assigned to Me ({assignedPRs.length})
         </button>
       </div>
+      <input
+        style={styles.searchInput}
+        placeholder="🔍 Search PRs by title..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
       {/* PR List */}
       <div style={styles.prList}>
@@ -172,50 +179,56 @@ function Dashboard({ user }: { user: any }) {
         0 ? (
           <div style={styles.empty}>No PRs here yet.</div>
         ) : (
-          (activeTab === "submitted" ? submittedPRs : assignedPRs).map((pr) => (
-            <div key={pr.id} style={styles.prCard}>
-              <div style={styles.prInfo}>
-                <a
-                  href={pr.github_pr_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={styles.prTitle}
-                >
-                  {pr.title || pr.github_pr_url}
-                </a>
-                <span
-                  style={{
-                    ...styles.status,
-                    background: statusColor[pr.status],
-                  }}
-                >
-                  {pr.status}
-                </span>
-              </div>
-              {activeTab === "assigned" && (
-                <div style={styles.actions}>
-                  <button
-                    style={styles.actionBtn}
-                    onClick={() => updateStatus(pr.id, "in-review")}
+          (activeTab === "submitted" ? submittedPRs : assignedPRs)
+            .filter(
+              (pr) =>
+                pr.title?.toLowerCase().includes(search.toLowerCase()) ||
+                pr.github_pr_url.toLowerCase().includes(search.toLowerCase()),
+            )
+            .map((pr) => (
+              <div key={pr.id} style={styles.prCard}>
+                <div style={styles.prInfo}>
+                  <a
+                    href={pr.github_pr_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={styles.prTitle}
                   >
-                    In Review
-                  </button>
-                  <button
-                    style={styles.actionBtn}
-                    onClick={() => updateStatus(pr.id, "approved")}
+                    {pr.title || pr.github_pr_url}
+                  </a>
+                  <span
+                    style={{
+                      ...styles.status,
+                      background: statusColor[pr.status],
+                    }}
                   >
-                    Approve
-                  </button>
-                  <button
-                    style={styles.actionBtn}
-                    onClick={() => updateStatus(pr.id, "changes-requested")}
-                  >
-                    Request Changes
-                  </button>
+                    {pr.status}
+                  </span>
                 </div>
-              )}
-            </div>
-          ))
+                {activeTab === "assigned" && (
+                  <div style={styles.actions}>
+                    <button
+                      style={styles.actionBtn}
+                      onClick={() => updateStatus(pr.id, "in-review")}
+                    >
+                      In Review
+                    </button>
+                    <button
+                      style={styles.actionBtn}
+                      onClick={() => updateStatus(pr.id, "approved")}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      style={styles.actionBtn}
+                      onClick={() => updateStatus(pr.id, "changes-requested")}
+                    >
+                      Request Changes
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
         )}
       </div>
     </div>
@@ -337,6 +350,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: "6px",
     cursor: "pointer",
     fontSize: "13px",
+  },
+  searchInput: {
+    display: "block",
+    width: "calc(100% - 64px)",
+    margin: "16px 32px 8px 32px",
+    padding: "8px 12px",
+    background: "#0d1117",
+    border: "1px solid #30363d",
+    borderRadius: "6px",
+    color: "#c9d1d9",
+    fontSize: "14px",
   },
 };
 

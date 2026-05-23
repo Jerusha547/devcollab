@@ -31,7 +31,17 @@ module.exports = (notifyUser, isAuthenticated) => {
       );
 
       const title = response.data.title;
+      const existing = await pool.query(
+        `SELECT id FROM pull_requests 
+   WHERE github_pr_url = $1 AND submitter_id = $2`,
+        [github_pr_url, req.user.username],
+      );
 
+      if (existing.rows.length > 0) {
+        return res
+          .status(400)
+          .json({ message: "You already submitted this PR for review" });
+      }
       const result = await pool.query(
         `INSERT INTO pull_requests 
           (github_pr_url, title, submitter_id, reviewer_id, status)
