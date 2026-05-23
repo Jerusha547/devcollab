@@ -56,6 +56,27 @@ function Dashboard({ user }: { user: any }) {
       return;
     }
     setSubmitting(true);
+    // try {
+    //   const res = await fetch(`${process.env.REACT_APP_API_URL}/prs/submit`, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //       Authorization: `Bearer ${localStorage.getItem("token")}`,
+    //     },
+    //     body: JSON.stringify({ github_pr_url: prUrl, reviewer_id: reviewerId }),
+    //   });
+    //   const data = await res.json();
+    //   if (data.id) {
+    //     setMessage("PR submitted successfully!");
+    //     setPrUrl("");
+    //     setReviewerId("");
+    //     fetchPRs();
+    //   } else {
+    //     setMessage("Failed to submit PR");
+    //   }
+    // } catch {
+    //   setMessage(data.message || "Failed to submit PR");
+    // }
     try {
       const res = await fetch(`${process.env.REACT_APP_API_URL}/prs/submit`, {
         method: "POST",
@@ -72,10 +93,10 @@ function Dashboard({ user }: { user: any }) {
         setReviewerId("");
         fetchPRs();
       } else {
-        setMessage("Failed to submit PR");
+        setMessage(data.message || "Failed to submit PR");
       }
     } catch {
-      setMessage("Failed to submit PR");
+      setMessage("Something went wrong. Please try again.");
     }
     setSubmitting(false);
   };
