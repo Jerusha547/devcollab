@@ -3,13 +3,53 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const GitHubStrategy = require("passport-github2").Strategy;
-const githubRoutes = require("./routes/github");
-const prRoutes = require("./routes/prs");
-
+const { createServer } = require("http");
+const { WebSocketServer } = require("ws");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Create HTTP server from express app
+const server = createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocketServer({ server });
+
+// Store connected clients: { username: ws }
+const clients = new Map();
+
+wss.on("connection", (ws, req) => {
+  let username = null;
+
+  ws.on("message", (message) => {
+    try {
+      const data = JSON.parse(message);
+      if (data.type === "register") {
+        username = data.username;
+        clients.set(username, ws);
+        console.log(`WebSocket registered: ${username}`);
+      }
+    } catch (e) {
+      console.error("WebSocket message error:", e);
+    }
+  });
+
+  ws.on("close", () => {
+    if (username) {
+      clients.delete(username);
+      console.log(`WebSocket disconnected: ${username}`);
+    }
+  });
+});
+
+// Export so routes can use it
+const notifyUser = (username, payload) => {
+  const client = clients.get(username);
+  if (client && client.readyState === 1) {
+    client.send(JSON.stringify(payload));
+  }
+};
 
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
@@ -22,8 +62,6 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
-app.use("/github", githubRoutes);
-app.use("/prs", prRoutes);
 
 passport.use(
   new GitHubStrategy(
@@ -48,39 +86,33 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
 // Routes
-app.get("/", (req, res) => {
-  res.json({ message: "DevCollab API running" });
-});
+const githubRoutes = require("./routes/github");
+const prRoutes = require("./routes/prs")(notifyUser);
 
+app.get("/", (req, res) => res.json({ message: "DevCollab API running" }));
 app.get(
   "/auth/github",
   passport.authenticate("github", { scope: ["user", "repo"] }),
 );
-
 app.get(
   "/auth/github/callback",
   passport.authenticate("github", {
     failureRedirect: "http://localhost:3000/login",
   }),
-  (req, res) => {
-    res.redirect("http://localhost:3000/dashboard");
-  },
+  (req, res) => res.redirect("http://localhost:3000/dashboard"),
 );
-
 app.get("/auth/me", (req, res) => {
-  if (req.user) {
-    res.json(req.user);
-  } else {
-    res.status(401).json({ message: "Not logged in" });
-  }
+  if (req.user) res.json(req.user);
+  else res.status(401).json({ message: "Not logged in" });
 });
-
 app.get("/auth/logout", (req, res) => {
-  req.logout(() => {
-    res.json({ message: "Logged out" });
-  });
+  req.logout(() => res.json({ message: "Logged out" }));
 });
 
-app.listen(PORT, () => {
+app.use("/github", githubRoutes);
+app.use("/prs", prRoutes);
+
+// Use server.listen instead of app.listen
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

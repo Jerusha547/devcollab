@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import useWebSocket from "../hooks/useWebSocket";
 
 interface PR {
   id: number;
@@ -18,7 +19,13 @@ function Dashboard({ user }: { user: any }) {
   const [reviewerId, setReviewerId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [notification, setNotification] = useState("");
 
+  useWebSocket(user.username, (data) => {
+    setNotification(data.message);
+    fetchPRs();
+    setTimeout(() => setNotification(""), 5000);
+  });
   useEffect(() => {
     fetchPRs();
   }, []);
@@ -97,6 +104,7 @@ function Dashboard({ user }: { user: any }) {
           </a>
         </div>
       </div>
+      {notification && <div style={styles.notification}>🔔 {notification}</div>}
 
       {/* Submit PR form */}
       <div style={styles.card}>
@@ -297,6 +305,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: "6px",
     cursor: "pointer",
     fontSize: "12px",
+  },
+  notification: {
+    background: "#1f6feb",
+    color: "#ffffff",
+    padding: "12px 32px",
+    fontSize: "14px",
   },
 };
 
