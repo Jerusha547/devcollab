@@ -23,7 +23,9 @@ function Metrics({ user, onBack }: { user: any; onBack: () => void }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:5000/prs/metrics", { credentials: "include" })
+    fetch("${process.env.REACT_APP_API_URL}/prs/metrics", {
+      credentials: "include",
+    })
       .then((r) => r.json())
       .then((data) => {
         setMetrics(data);

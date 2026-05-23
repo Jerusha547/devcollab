@@ -34,10 +34,10 @@ function Dashboard({ user }: { user: any }) {
 
   const fetchPRs = async () => {
     const [submitted, assigned] = await Promise.all([
-      fetch("http://localhost:5000/prs/submitted", {
+      fetch("${process.env.REACT_APP_API_URL}/prs/submitted", {
         credentials: "include",
       }).then((r) => r.json()),
-      fetch("http://localhost:5000/prs/assigned", {
+      fetch("${process.env.REACT_APP_API_URL}/prs/assigned", {
         credentials: "include",
       }).then((r) => r.json()),
     ]);
@@ -52,7 +52,7 @@ function Dashboard({ user }: { user: any }) {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("http://localhost:5000/prs/submit", {
+      const res = await fetch("${process.env.REACT_APP_API_URL}/prs/submit", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -78,7 +78,7 @@ function Dashboard({ user }: { user: any }) {
   };
 
   const updateStatus = async (id: number, status: string) => {
-    await fetch(`http://localhost:5000/prs/${id}/status`, {
+    await fetch(`${process.env.REACT_APP_API_URL}/prs/${id}/status`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -102,7 +102,10 @@ function Dashboard({ user }: { user: any }) {
         <div style={styles.userInfo}>
           <img src={user.avatar_url} alt="avatar" style={styles.avatar} />
           <span style={styles.username}>{user.username}</span>
-          <a href="http://localhost:5000/auth/logout" style={styles.logout}>
+          <a
+            href="${process.env.REACT_APP_API_URL}/auth/logout"
+            style={styles.logout}
+          >
             Logout
           </a>
           <button

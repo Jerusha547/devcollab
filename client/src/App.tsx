@@ -8,7 +8,9 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:5000/auth/me", { credentials: "include" })
+    fetch("${process.env.REACT_APP_API_URL}/auth/me", {
+      credentials: "include",
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.username) setUser(data);
