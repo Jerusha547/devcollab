@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import useWebSocket from "../hooks/useWebSocket";
+import Metrics from "./Metrics";
 
 interface PR {
   id: number;
@@ -20,6 +21,7 @@ function Dashboard({ user }: { user: any }) {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [notification, setNotification] = useState("");
+  const [showMetrics, setShowMetrics] = useState(false);
 
   useWebSocket(user.username, (data) => {
     setNotification(data.message);
@@ -91,7 +93,8 @@ function Dashboard({ user }: { user: any }) {
     approved: "#3fb950",
     "changes-requested": "#f85149",
   };
-
+  if (showMetrics)
+    return <Metrics user={user} onBack={() => setShowMetrics(false)} />;
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -102,6 +105,12 @@ function Dashboard({ user }: { user: any }) {
           <a href="http://localhost:5000/auth/logout" style={styles.logout}>
             Logout
           </a>
+          <button
+            style={styles.metricsBtn}
+            onClick={() => setShowMetrics(true)}
+          >
+            📊 Team Metrics
+          </button>
         </div>
       </div>
       {notification && <div style={styles.notification}>🔔 {notification}</div>}
@@ -311,6 +320,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#ffffff",
     padding: "12px 32px",
     fontSize: "14px",
+  },
+  metricsBtn: {
+    background: "#21262d",
+    color: "#c9d1d9",
+    border: "1px solid #30363d",
+    padding: "6px 14px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "13px",
   },
 };
 

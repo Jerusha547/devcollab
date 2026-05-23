@@ -118,6 +118,48 @@ module.exports = (notifyUser) => {
       res.status(500).json({ message: "Failed to update status" });
     }
   });
+  // Get dashboard metrics
+  router.get("/metrics", isAuthenticated, async (req, res) => {
+    try {
+      const totalPRs = await pool.query(
+        `SELECT COUNT(*) FROM pull_requests WHERE submitter_id = $1 OR reviewer_id = $1`,
+        [req.user.username],
+      );
 
+      const byStatus = await pool.query(
+        `SELECT status, COUNT(*) as count 
+       FROM pull_requests 
+       WHERE submitter_id = $1 OR reviewer_id = $1
+       GROUP BY status`,
+        [req.user.username],
+      );
+
+      const avgTurnaround = await pool.query(
+        `SELECT ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/3600)::numeric, 1) as avg_hours
+       FROM pull_requests
+       WHERE reviewer_id = $1 AND status = 'approved'`,
+        [req.user.username],
+      );
+
+      const reviewLoad = await pool.query(
+        `SELECT reviewer_id, COUNT(*) as assigned, 
+              SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as completed
+       FROM pull_requests
+       GROUP BY reviewer_id
+       ORDER BY assigned DESC
+       LIMIT 10`,
+      );
+
+      res.json({
+        total: parseInt(totalPRs.rows[0].count),
+        byStatus: byStatus.rows,
+        avgTurnaroundHours: avgTurnaround.rows[0].avg_hours || 0,
+        reviewLoad: reviewLoad.rows,
+      });
+    } catch (error) {
+      console.error("Metrics error:", error.message);
+      res.status(500).json({ message: "Failed to fetch metrics" });
+    }
+  });
   return router;
 };
