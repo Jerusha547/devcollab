@@ -6,7 +6,10 @@ function Login() {
       <div style={styles.card}>
         <h1 style={styles.title}>DevCollab</h1>
         <p style={styles.subtitle}>Code review tracking for developer teams</p>
-        <a href="http://localhost:5000/auth/github" style={styles.button}>
+        <a
+          href={`${process.env.REACT_APP_API_URL}/auth/github`}
+          style={styles.button}
+        >
           Login with GitHub
         </a>
       </div>
