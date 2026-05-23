@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import useWebSocket from "../hooks/useWebSocket";
 import Metrics from "./Metrics";
 
+const getHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+});
 interface PR {
   id: number;
   github_pr_url: string;
@@ -35,10 +39,10 @@ function Dashboard({ user }: { user: any }) {
   const fetchPRs = async () => {
     const [submitted, assigned] = await Promise.all([
       fetch(`${process.env.REACT_APP_API_URL}/prs/submitted`, {
-        credentials: "include",
+        headers: getHeaders(),
       }).then((r) => r.json()),
       fetch(`${process.env.REACT_APP_API_URL}/prs/assigned`, {
-        credentials: "include",
+        headers: getHeaders(),
       }).then((r) => r.json()),
     ]);
     setSubmittedPRs(Array.isArray(submitted) ? submitted : []);
@@ -103,8 +107,9 @@ function Dashboard({ user }: { user: any }) {
           <img src={user.avatar_url} alt="avatar" style={styles.avatar} />
           <span style={styles.username}>{user.username}</span>
           <a
-            href={`${process.env.REACT_APP_API_URL}/auth/logout`}
+            href="/login"
             style={styles.logout}
+            onClick={() => localStorage.removeItem("token")}
           >
             Logout
           </a>

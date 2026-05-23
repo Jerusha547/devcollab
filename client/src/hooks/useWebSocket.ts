@@ -16,7 +16,13 @@ const useWebSocket = (username: string, onMessage: (data: any) => void) => {
     );
 
     ws.current.onopen = () => {
-      ws.current?.send(JSON.stringify({ type: "register", username }));
+      ws.current?.send(
+        JSON.stringify({
+          type: "register",
+          username,
+          token: localStorage.getItem("token"),
+        }),
+      );
     };
 
     ws.current.onmessage = (event) => {

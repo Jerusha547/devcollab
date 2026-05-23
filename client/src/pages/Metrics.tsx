@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 
+const getHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+});
 interface StatusCount {
   status: string;
   count: string;
@@ -23,8 +27,8 @@ function Metrics({ user, onBack }: { user: any; onBack: () => void }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_API_URL}/prs/metrics`, {
-      credentials: "include",
+    fetch(`${process.env.REACT_APP_API_URL}/prs/submitted`, {
+      headers: getHeaders(),
     })
       .then((r) => r.json())
       .then((data) => {

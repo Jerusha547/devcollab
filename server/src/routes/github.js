@@ -2,13 +2,21 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 
-// Middleware to check if user is logged in
 const isAuthenticated = (req, res, next) => {
-  if (req.user) return next();
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const jwt = require("jsonwebtoken");
+    const token = authHeader.split(" ")[1];
+    try {
+      req.user = jwt.verify(token, process.env.JWT_SECRET);
+      return next();
+    } catch {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  }
   res.status(401).json({ message: "Not logged in" });
 };
 
-// Get all repos of logged in user
 router.get("/repos", isAuthenticated, async (req, res) => {
   try {
     const response = await axios.get("https://api.github.com/user/repos", {
@@ -16,10 +24,7 @@ router.get("/repos", isAuthenticated, async (req, res) => {
         Authorization: `Bearer ${req.user.access_token}`,
         Accept: "application/vnd.github.v3+json",
       },
-      params: {
-        sort: "updated",
-        per_page: 20,
-      },
+      params: { sort: "updated", per_page: 20 },
     });
     const repos = response.data.map((repo) => ({
       id: repo.id,
@@ -34,7 +39,6 @@ router.get("/repos", isAuthenticated, async (req, res) => {
   }
 });
 
-// Get PRs for a specific repo
 router.get("/repos/:owner/:repo/pulls", isAuthenticated, async (req, res) => {
   try {
     const { owner, repo } = req.params;
@@ -45,10 +49,7 @@ router.get("/repos/:owner/:repo/pulls", isAuthenticated, async (req, res) => {
           Authorization: `Bearer ${req.user.access_token}`,
           Accept: "application/vnd.github.v3+json",
         },
-        params: {
-          state: "open",
-          per_page: 20,
-        },
+        params: { state: "open", per_page: 20 },
       },
     );
     const pulls = response.data.map((pr) => ({

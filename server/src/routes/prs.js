@@ -2,13 +2,13 @@ const express = require("express");
 const axios = require("axios");
 const pool = require("../db");
 
-module.exports = (notifyUser) => {
+module.exports = (notifyUser, isAuthenticated) => {
   const router = express.Router();
 
-  const isAuthenticated = (req, res, next) => {
-    if (req.user) return next();
-    res.status(401).json({ message: "Not logged in" });
-  };
+  // const isAuthenticated = (req, res, next) => {
+  //   if (req.user) return next();
+  //   res.status(401).json({ message: "Not logged in" });
+  // };
 
   // Submit a PR for review
   router.post("/submit", isAuthenticated, async (req, res) => {

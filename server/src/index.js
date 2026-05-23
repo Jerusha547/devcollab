@@ -1,49 +1,34 @@
 const express = require("express");
 const cors = require("cors");
-const session = require("express-session");
 const passport = require("passport");
 const GitHubStrategy = require("passport-github2").Strategy;
 const { createServer } = require("http");
 const { WebSocketServer } = require("ws");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Create HTTP server from express app
 const server = createServer(app);
-
-// Create WebSocket server
 const wss = new WebSocketServer({ server });
-
-// Store connected clients: { username: ws }
 const clients = new Map();
 
-wss.on("connection", (ws, req) => {
+wss.on("connection", (ws) => {
   let username = null;
-
   ws.on("message", (message) => {
     try {
       const data = JSON.parse(message);
       if (data.type === "register") {
         username = data.username;
         clients.set(username, ws);
-        console.log(`WebSocket registered: ${username}`);
       }
-    } catch (e) {
-      console.error("WebSocket message error:", e);
-    }
+    } catch (e) {}
   });
-
   ws.on("close", () => {
-    if (username) {
-      clients.delete(username);
-      console.log(`WebSocket disconnected: ${username}`);
-    }
+    if (username) clients.delete(username);
   });
 });
 
-// Export so routes can use it
 const notifyUser = (username, payload) => {
   const client = clients.get(username);
   if (client && client.readyState === 1) {
@@ -51,44 +36,16 @@ const notifyUser = (username, payload) => {
   }
 };
 
-// app.use(
-//   cors({
-//     origin: process.env.CLIENT_URL || "http://localhost:3000",
-//     credentials: true,
-//     methods: ["GET", "POST", "PATCH", "DELETE"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//   }),
-// );
 app.use(
   cors({
-    origin: (origin, callback) => {
-      const allowedOrigin = process.env.CLIENT_URL || "http://localhost:3000";
-      if (!origin || origin.startsWith(allowedOrigin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(express.json());
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: true,
-      sameSite: "none",
-      httpOnly: true,
-    },
-  }),
-);
 app.use(passport.initialize());
-app.use(passport.session());
 
 passport.use(
   new GitHubStrategy(
@@ -112,34 +69,58 @@ passport.use(
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
-// Routes
-const githubRoutes = require("./routes/github");
-const prRoutes = require("./routes/prs")(notifyUser);
+// JWT middleware
+const authenticateJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.split(" ")[1];
+    try {
+      req.user = jwt.verify(token, process.env.JWT_SECRET);
+      return next();
+    } catch {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  }
+  res.status(401).json({ message: "Not logged in" });
+};
 
 app.get("/", (req, res) => res.json({ message: "DevCollab API running" }));
+
 app.get(
   "/auth/github",
-  passport.authenticate("github", { scope: ["user", "repo"] }),
+  passport.authenticate("github", { scope: ["user", "repo"], session: false }),
 );
+
 app.get(
   "/auth/github/callback",
   passport.authenticate("github", {
-    failureRedirect: `${process.env.CLIENT_URL}/login`,
+    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:3000"}/login`,
+    session: false,
   }),
-  (req, res) => res.redirect(`${process.env.CLIENT_URL}/dashboard`),
+  (req, res) => {
+    const token = jwt.sign(req.user, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+    res.redirect(
+      `${process.env.CLIENT_URL || "http://localhost:3000"}/dashboard?token=${token}`,
+    );
+  },
 );
-app.get("/auth/me", (req, res) => {
-  if (req.user) res.json(req.user);
-  else res.status(401).json({ message: "Not logged in" });
+
+app.get("/auth/me", authenticateJWT, (req, res) => {
+  res.json(req.user);
 });
+
 app.get("/auth/logout", (req, res) => {
-  req.logout(() => res.json({ message: "Logged out" }));
+  res.json({ message: "Logged out" });
 });
+
+const githubRoutes = require("./routes/github");
+const prRoutes = require("./routes/prs")(notifyUser, authenticateJWT);
 
 app.use("/github", githubRoutes);
 app.use("/prs", prRoutes);
 
-// Use server.listen instead of app.listen
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
