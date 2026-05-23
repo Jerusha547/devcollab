@@ -51,7 +51,12 @@ const notifyUser = (username, payload) => {
   }
 };
 
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(
   session({
@@ -97,9 +102,9 @@ app.get(
 app.get(
   "/auth/github/callback",
   passport.authenticate("github", {
-    failureRedirect: "http://localhost:3000/login",
+    failureRedirect: `${process.env.CLIENT_URL}/login`,
   }),
-  (req, res) => res.redirect("http://localhost:3000/dashboard"),
+  (req, res) => res.redirect(`${process.env.CLIENT_URL}/dashboard`),
 );
 app.get("/auth/me", (req, res) => {
   if (req.user) res.json(req.user);
