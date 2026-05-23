@@ -34,10 +34,10 @@ function Dashboard({ user }: { user: any }) {
 
   const fetchPRs = async () => {
     const [submitted, assigned] = await Promise.all([
-      fetch("${process.env.REACT_APP_API_URL}/prs/submitted", {
+      fetch(`${process.env.REACT_APP_API_URL}/prs/submitted`, {
         credentials: "include",
       }).then((r) => r.json()),
-      fetch("${process.env.REACT_APP_API_URL}/prs/assigned", {
+      fetch(`${process.env.REACT_APP_API_URL}/prs/assigned`, {
         credentials: "include",
       }).then((r) => r.json()),
     ]);
@@ -52,7 +52,7 @@ function Dashboard({ user }: { user: any }) {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("${process.env.REACT_APP_API_URL}/prs/submit", {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/prs/submit`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -103,7 +103,7 @@ function Dashboard({ user }: { user: any }) {
           <img src={user.avatar_url} alt="avatar" style={styles.avatar} />
           <span style={styles.username}>{user.username}</span>
           <a
-            href="${process.env.REACT_APP_API_URL}/auth/logout"
+            href={`${process.env.REACT_APP_API_URL}/auth/logout`}
             style={styles.logout}
           >
             Logout

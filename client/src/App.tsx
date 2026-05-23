@@ -8,7 +8,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("${process.env.REACT_APP_API_URL}/auth/me", {
+    fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
       credentials: "include",
     })
       .then((res) => res.json())
