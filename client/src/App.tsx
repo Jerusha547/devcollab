@@ -39,7 +39,7 @@ function AppRoutes() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [location.search]);
 
   if (loading)
     return (
