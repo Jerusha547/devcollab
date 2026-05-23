@@ -80,7 +80,7 @@ psql -U postgres -d devcollab -f schema.sql
 ## Environment Variables
 
 ### Server (.env)
-
+```bash
 PORT=5000
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
@@ -93,11 +93,13 @@ DB_PASSWORD=postgres
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=devcollab
+```
 
 ### Client (.env)
-
+```bash
 REACT_APP_API_URL=http://localhost:5000
 REACT_APP_WS_URL=ws://localhost:5000
+```
 
 ## Features in Detail
 
