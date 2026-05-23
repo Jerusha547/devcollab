@@ -58,13 +58,11 @@ function Dashboard({ user }: { user: any }) {
     try {
       const res = await fetch(`${process.env.REACT_APP_API_URL}/prs/submit`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          github_pr_url: prUrl,
-          reviewer_id: reviewerId,
-          team_id: 1,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ github_pr_url: prUrl, reviewer_id: reviewerId }),
       });
       const data = await res.json();
       if (data.id) {
@@ -84,8 +82,10 @@ function Dashboard({ user }: { user: any }) {
   const updateStatus = async (id: number, status: string) => {
     await fetch(`${process.env.REACT_APP_API_URL}/prs/${id}/status`, {
       method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
       body: JSON.stringify({ status }),
     });
     fetchPRs();

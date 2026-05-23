@@ -27,7 +27,7 @@ function Metrics({ user, onBack }: { user: any; onBack: () => void }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_API_URL}/prs/submitted`, {
+    fetch(`${process.env.REACT_APP_API_URL}/prs/metrics`, {
       headers: getHeaders(),
     })
       .then((r) => r.json())
