@@ -5,7 +5,6 @@ const GitHubStrategy = require("passport-github2").Strategy;
 const { createServer } = require("http");
 const { WebSocketServer } = require("ws");
 const jwt = require("jsonwebtoken");
-const teamRoutes = require("./routes/teams")(authenticateJWT);
 require("dotenv").config();
 
 const app = express();
@@ -47,7 +46,6 @@ app.use(
 );
 app.use(express.json());
 app.use(passport.initialize());
-app.use("/teams", teamRoutes);
 
 passport.use(
   new GitHubStrategy(
@@ -71,7 +69,6 @@ passport.use(
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
-// JWT middleware
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader) {
@@ -119,9 +116,11 @@ app.get("/auth/logout", (req, res) => {
 
 const githubRoutes = require("./routes/github");
 const prRoutes = require("./routes/prs")(notifyUser, authenticateJWT);
+const teamRoutes = require("./routes/teams")(authenticateJWT);
 
 app.use("/github", githubRoutes);
 app.use("/prs", prRoutes);
+app.use("/teams", teamRoutes);
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
