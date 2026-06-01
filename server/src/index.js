@@ -5,6 +5,7 @@ const GitHubStrategy = require("passport-github2").Strategy;
 const { createServer } = require("http");
 const { WebSocketServer } = require("ws");
 const jwt = require("jsonwebtoken");
+const teamRoutes = require("./routes/teams")(authenticateJWT);
 require("dotenv").config();
 
 const app = express();
@@ -46,6 +47,7 @@ app.use(
 );
 app.use(express.json());
 app.use(passport.initialize());
+app.use("/teams", teamRoutes);
 
 passport.use(
   new GitHubStrategy(
