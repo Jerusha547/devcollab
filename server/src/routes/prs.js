@@ -42,12 +42,20 @@ module.exports = (notifyUser, isAuthenticated) => {
           .status(400)
           .json({ message: "You already submitted this PR for review" });
       }
+      // Get user's team
+      const teamResult = await pool.query(
+        `SELECT t.id FROM teams t
+   JOIN team_members tm ON t.id = tm.team_id
+   WHERE tm.user_id = $1`,
+        [req.user.username],
+      );
+      const team_id = teamResult.rows.length > 0 ? teamResult.rows[0].id : null;
       const result = await pool.query(
         `INSERT INTO pull_requests 
-          (github_pr_url, title, submitter_id, reviewer_id, status)
-         VALUES ($1, $2, $3, $4, 'pending')
-         RETURNING *`,
-        [github_pr_url, title, req.user.username, reviewer_id],
+    (github_pr_url, title, submitter_id, reviewer_id, team_id, status)
+   VALUES ($1, $2, $3, $4, $5, 'pending')
+   RETURNING *`,
+        [github_pr_url, title, req.user.username, reviewer_id, team_id],
       );
 
       // Notify reviewer in real time
@@ -67,11 +75,20 @@ module.exports = (notifyUser, isAuthenticated) => {
   // Get all PRs submitted by logged in user
   router.get("/submitted", isAuthenticated, async (req, res) => {
     try {
-      const result = await pool.query(
-        `SELECT * FROM pull_requests WHERE submitter_id = $1 ORDER BY created_at DESC`,
+      const teamResult = await pool.query(
+        `SELECT t.id FROM teams t
+   JOIN team_members tm ON t.id = tm.team_id
+   WHERE tm.user_id = $1`,
         [req.user.username],
       );
-      res.json(result.rows);
+      const team_id = teamResult.rows[0]?.id;
+
+      const result = await pool.query(
+        `SELECT * FROM pull_requests 
+   WHERE submitter_id = $1 AND team_id = $2
+   ORDER BY created_at DESC`,
+        [req.user.username, team_id],
+      );
     } catch (error) {
       console.error("Submitted error:", error.message);
       res.status(500).json({ message: "Failed to fetch PRs" });
@@ -81,9 +98,19 @@ module.exports = (notifyUser, isAuthenticated) => {
   // Get all PRs assigned to logged in user
   router.get("/assigned", isAuthenticated, async (req, res) => {
     try {
-      const result = await pool.query(
-        `SELECT * FROM pull_requests WHERE reviewer_id = $1 ORDER BY created_at DESC`,
+      const teamResult = await pool.query(
+        `SELECT t.id FROM teams t
+   JOIN team_members tm ON t.id = tm.team_id
+   WHERE tm.user_id = $1`,
         [req.user.username],
+      );
+      const team_id = teamResult.rows[0]?.id;
+
+      const result = await pool.query(
+        `SELECT * FROM pull_requests 
+   WHERE reviewer_id = $1 AND team_id = $2
+   ORDER BY created_at DESC`,
+        [req.user.username, team_id],
       );
       res.json(result.rows);
     } catch (error) {
@@ -131,33 +158,43 @@ module.exports = (notifyUser, isAuthenticated) => {
   // Get dashboard metrics
   router.get("/metrics", isAuthenticated, async (req, res) => {
     try {
-      const totalPRs = await pool.query(
-        `SELECT COUNT(*) FROM pull_requests WHERE submitter_id = $1 OR reviewer_id = $1`,
+      const teamResult = await pool.query(
+        `SELECT t.id FROM teams t
+   JOIN team_members tm ON t.id = tm.team_id
+   WHERE tm.user_id = $1`,
         [req.user.username],
+      );
+      const team_id = teamResult.rows[0]?.id;
+
+      const totalPRs = await pool.query(
+        `SELECT COUNT(*) FROM pull_requests 
+   WHERE team_id = $1`,
+        [team_id],
       );
 
       const byStatus = await pool.query(
         `SELECT status, COUNT(*) as count 
-       FROM pull_requests 
-       WHERE submitter_id = $1 OR reviewer_id = $1
-       GROUP BY status`,
-        [req.user.username],
+   FROM pull_requests 
+   WHERE team_id = $1
+   GROUP BY status`,
+        [team_id],
       );
 
       const avgTurnaround = await pool.query(
         `SELECT ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/3600)::numeric, 1) as avg_hours
-       FROM pull_requests
-       WHERE reviewer_id = $1 AND status = 'approved'`,
-        [req.user.username],
+   FROM pull_requests
+   WHERE team_id = $1 AND status = 'approved'`,
+        [team_id],
       );
 
       const reviewLoad = await pool.query(
-        `SELECT reviewer_id, COUNT(*) as assigned, 
-              SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as completed
-       FROM pull_requests
-       GROUP BY reviewer_id
-       ORDER BY assigned DESC
-       LIMIT 10`,
+        `SELECT reviewer_id, COUNT(*) as assigned,
+          SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as completed
+   FROM pull_requests
+   WHERE team_id = $1
+   GROUP BY reviewer_id
+   ORDER BY assigned DESC`,
+        [team_id],
       );
 
       res.json({
