@@ -89,6 +89,7 @@ module.exports = (notifyUser, isAuthenticated) => {
    ORDER BY created_at DESC`,
         [req.user.username, team_id],
       );
+      res.json(result.rows);
     } catch (error) {
       console.error("Submitted error:", error.message);
       res.status(500).json({ message: "Failed to fetch PRs" });
