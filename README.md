@@ -1,6 +1,6 @@
 # DevCollab
 
-A GitHub-integrated async code review platform for developer teams🌟.
+A GitHub-integrated async code review platform for developer teams🌟
 
 ## Live Demo
 
