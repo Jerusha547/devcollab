@@ -37,6 +37,16 @@ DevCollab replaces the chaos of managing code reviews over WhatsApp or Slack. De
 │ GitHub API │
 │ OAuth + PRs │
 └──────────────┘
+## Screenshots
+### Login
+<img width="1919" height="971" alt="Screenshot 2026-06-01 163921" src="https://github.com/user-attachments/assets/0f632388-bf27-4953-a66c-12a20460062c" />
+
+### Dashboard
+<img width="1919" height="971" alt="image" src="https://github.com/user-attachments/assets/87d3f8ab-8414-4557-a6ad-c7be8dd7bae7" />
+
+### Team Metrics
+<img width="1919" height="969" alt="image" src="https://github.com/user-attachments/assets/10e821f0-3c2e-48fe-a8b2-83323e71dd71" />
+
 
 ## Getting Started Locally
 
@@ -119,6 +129,15 @@ WebSocket connection is established on login. When a PR status changes, the subm
 - Completion rate with visual progress bars
 - Average review turnaround time
 - Status breakdown across the team
+
+### Team Management
+- Create a team and get a unique invite code
+- Share invite code with teammates to join
+- PRs and metrics are scoped to your team only
+- Only see your team's review activity
+
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you'd like to change.
 
 ## Author
 
