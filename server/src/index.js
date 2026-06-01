@@ -54,14 +54,28 @@ passport.use(
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: `${process.env.SERVER_URL || "http://localhost:5000"}/auth/github/callback`,
     },
-    (accessToken, refreshToken, profile, done) => {
-      const user = {
-        github_id: profile.id,
-        username: profile.username,
-        avatar_url: profile.photos[0].value,
-        access_token: accessToken,
-      };
-      return done(null, user);
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        const user = {
+          github_id: profile.id,
+          username: profile.username,
+          avatar_url: profile.photos[0].value,
+          access_token: accessToken,
+        };
+
+        const pool = require("./db");
+        await pool.query(
+          `INSERT INTO users (github_id, username, avatar_url, access_token)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (github_id)
+       DO UPDATE SET username = $2, avatar_url = $3, access_token = $4`,
+          [user.github_id, user.username, user.avatar_url, user.access_token],
+        );
+
+        return done(null, user);
+      } catch (err) {
+        return done(err);
+      }
     },
   ),
 );
