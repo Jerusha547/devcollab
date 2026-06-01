@@ -14,7 +14,8 @@ interface PR {
   created_at: string;
 }
 
-function Dashboard({ user }: { user: any }) {
+// function Dashboard({ user }: { user: any }) {
+function Dashboard({ user, team }: { user: any; team: any }) {
   const [submittedPRs, setSubmittedPRs] = useState<PR[]>([]);
   const [assignedPRs, setAssignedPRs] = useState<PR[]>([]);
   const [activeTab, setActiveTab] = useState<"submitted" | "assigned">(
@@ -125,6 +126,10 @@ function Dashboard({ user }: { user: any }) {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1 style={styles.logo}>DevCollab</h1>
+        <div style={styles.teamInfo}>
+          <span style={styles.teamName}>{team.name}</span>
+          <span style={styles.inviteCode}>Invite: {team.invite_code}</span>
+        </div>
         <div style={styles.userInfo}>
           <img src={user.avatar_url} alt="avatar" style={styles.avatar} />
           <span style={styles.username}>{user.username}</span>
@@ -383,6 +388,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#c9d1d9",
     fontSize: "14px",
   },
+  teamInfo: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+  },
+  teamName: { color: "#ffffff", fontSize: "13px", fontWeight: "500" },
+  inviteCode: { color: "#3fb950", fontSize: "11px", letterSpacing: "1px" },
 };
 
 export default Dashboard;
