@@ -13,6 +13,7 @@ module.exports = (notifyUser, isAuthenticated) => {
   // Submit a PR for review
   router.post("/submit", isAuthenticated, async (req, res) => {
     try {
+      console.log(req.user);
       const { github_pr_url, reviewer_id } = req.body;
 
       const parts = github_pr_url.split("/");
